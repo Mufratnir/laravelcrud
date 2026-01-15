@@ -54,6 +54,7 @@ class ProductApiController extends Controller
             'category_id' => 'required|exists:categories,id',
             'thumbnail' => 'nullable|image',
             'status' => 'required|boolean',
+            'description'=>'nullable|string',
         ]);
 
         $imagePath = null;
@@ -67,6 +68,7 @@ class ProductApiController extends Controller
             'thumbnail' => $imagePath,
             'category_id' => $request->category_id,
             'status' => $request->status,
+            'description' => $request->description,
         ]);
 
         return response()->json([
@@ -91,6 +93,7 @@ class ProductApiController extends Controller
             'category_id' => 'required',
             'thumbnail' => 'nullable|image',
             'status' => 'required|boolean',
+            'description'=>'nullable|string',
         ]);
 
         if ($request->hasFile('thumbnail')) {
@@ -105,6 +108,7 @@ class ProductApiController extends Controller
             'slug' => Str::slug($request->name),
             'category_id' => $request->category_id,
             'status' => $request->status,
+            'description'=> $request->description,
         ]);
 
         return response()->json([

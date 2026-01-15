@@ -11,7 +11,8 @@ class Product extends Model
         'slug',
         'thumbnail',
         'category_id',
-        'status'
+        'status',
+        'description'
     ];
     public function category(){
         return $this->belongsTo(Category::class);
