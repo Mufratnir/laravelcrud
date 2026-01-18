@@ -4,20 +4,25 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\URL;
+use App\Http\Requests\ProductRequest;
+use App\Services\ProductService;
 
 class ProductApiController extends Controller
 {
+    protected ProductService $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
     public function index()
     {
         $products = Product::with('category')->latest()->get()->map(function ($product) {
             return [
                 'id' => $product->id,
                 'name' => $product->name,
-                'category' => $product->category,
+                'category' => $product->category?->name,
                 'status' => $product->status,
                 'thumbnail' => $product->thumbnail
                     ? url('storage/' . $product->thumbnail)
@@ -33,43 +38,26 @@ class ProductApiController extends Controller
 
     public function show(Product $product)
     {
+        $product->load('category');
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $product->id,
                 'name' => $product->name,
-                'category_id' => $product->category_id,
+                'category' => $product->category?->name,
                 'status' => $product->status,
                 'thumbnail' => $product->thumbnail
                     ? url('storage/' . $product->thumbnail)
                     : null,
+
+                'description' => $product->description,
             ]
         ]);
     }
 
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'category_id' => 'required|exists:categories,id',
-            'thumbnail' => 'nullable|image',
-            'status' => 'required|boolean',
-            'description'=>'nullable|string',
-        ]);
-
-        $imagePath = null;
-        if ($request->hasFile('thumbnail')) {
-            $imagePath = $request->file('thumbnail')->store('products', 'public');
-        }
-
-        $product = Product::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'thumbnail' => $imagePath,
-            'category_id' => $request->category_id,
-            'status' => $request->status,
-            'description' => $request->description,
-        ]);
+        $product = $this->productService->store($request->validated());
 
         return response()->json([
             'success' => true,
@@ -86,30 +74,9 @@ class ProductApiController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(ProductRequest $request, Product $product)
     {
-        $request->validate([
-            'name' => 'required',
-            'category_id' => 'required',
-            'thumbnail' => 'nullable|image',
-            'status' => 'required|boolean',
-            'description'=>'nullable|string',
-        ]);
-
-        if ($request->hasFile('thumbnail')) {
-            if ($product->thumbnail) {
-                Storage::disk('public')->delete($product->thumbnail);
-            }
-            $product->thumbnail = $request->file('thumbnail')->store('products', 'public');
-        }
-
-        $product->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'category_id' => $request->category_id,
-            'status' => $request->status,
-            'description'=> $request->description,
-        ]);
+        $product = $this->productService->update($product, $request->validated());
 
         return response()->json([
             'success' => true,
@@ -128,11 +95,7 @@ class ProductApiController extends Controller
 
     public function destroy(Product $product)
     {
-        if ($product->thumbnail) {
-            Storage::disk('public')->delete($product->thumbnail);
-        }
-
-        $product->delete();
+        $this->productService->delete($product);
 
         return response()->json([
             'success' => true,
