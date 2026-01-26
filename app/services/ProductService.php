@@ -5,9 +5,26 @@ namespace App\Services;
 use App\Models\Product;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ProductService
 {
+    public function paginate(array $filters = [], int $perPage = 10): LengthAwarePaginator
+    {
+        $query = Product::with('category');
+        if (!empty($filters['search'])) {
+            $query->where('name', 'like', '%' . $filters['search'] . '%');
+        }
+
+        if (!empty($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+        return $query->paginate($perPage);
+    }
     public function store(array $data)
     {
         $imagePath = null;

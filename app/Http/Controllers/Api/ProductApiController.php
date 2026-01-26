@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Http\Requests\ProductRequest;
 use App\Services\ProductService;
+use Illuminate\Http\Request;
 
 class ProductApiController extends Controller
 {
@@ -16,23 +17,22 @@ class ProductApiController extends Controller
         $this->productService = $productService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->latest()->get()->map(function ($product) {
-            return [
-                'id' => $product->id,
-                'name' => $product->name,
-                'category' => $product->category?->name,
-                'status' => $product->status,
-                'thumbnail' => $product->thumbnail
-                    ? url('storage/' . $product->thumbnail)
-                    : null,
-            ];
-        });
+        $products = $this->productService->paginate(
+            $request->only(['search', 'category_id', 'status']),
+            $request->get('per_page', 10)
+        );
 
         return response()->json([
             'success' => true,
-            'data' => $products
+            'data' => $products->items(),
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'last_page'    => $products->lastPage(),
+                'per_page'     => $products->perPage(),
+                'total'        => $products->total(),
+            ]
         ]);
     }
 

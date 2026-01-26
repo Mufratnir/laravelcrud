@@ -14,6 +14,19 @@
 <p>{{ session('success') }}</p>
 @endif
 
+<form method="GET" class="mb-4 flex gap-2">
+    <input
+        type="text"
+        name="search"
+        value="{{ request('search') }}"
+        placeholder="Search product..."
+        class="border px-3 py-2 rounded"
+    />
+
+    <button class="bg-blue-500 text-white px-4 py-2 rounded">
+        Search
+    </button>
+</form>
 <table border="1" cellpadding="8">
 <tr>
     <th>Name</th>

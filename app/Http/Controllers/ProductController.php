@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Http\Requests\ProductRequest;
 use App\Services\ProductService;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
@@ -16,9 +17,13 @@ class ProductController extends Controller
         $this->productService = $productService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->latest()->get();
+        $products = $this->productService->paginate(
+            $request->only(['search', 'category_id', 'status']),
+            10
+        );
+
         return view('products.index', compact('products'));
     }
 
