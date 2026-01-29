@@ -10,7 +10,8 @@ use App\Http\Controllers\BaseController;
 
 class ForgotPasswordController extends BaseController
 {
- public function forgot(Request $request)
+ // SEND RESET LINK
+    public function forgot(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
@@ -25,6 +26,7 @@ class ForgotPasswordController extends BaseController
             : $this->sendError('Unable to send reset link');
     }
 
+    // RESET PASSWORD
     public function reset(Request $request)
     {
         $request->validate([

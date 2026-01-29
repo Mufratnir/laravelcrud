@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Controllers\BaseController;
+use Illuminate\Support\Facades\Auth;
 
 class RegisterController extends BaseController
-{
-     public function register(Request $request)
+{ public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -29,7 +28,7 @@ class RegisterController extends BaseController
             'password' => Hash::make($request->password),
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('frontend-token')->plainTextToken;
 
         return $this->sendResponse([
             'token' => $token,
@@ -44,7 +43,11 @@ class RegisterController extends BaseController
         }
 
         $user = Auth::user();
-        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Optional: revoke old tokens
+        $user->tokens()->delete();
+
+        $token = $user->createToken('frontend-token')->plainTextToken;
 
         return $this->sendResponse([
             'token' => $token,
