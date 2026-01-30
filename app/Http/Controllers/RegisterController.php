@@ -8,9 +8,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\http\JsonResponse;
 
 class RegisterController extends BaseController
-{ public function register(Request $request)
+{ 
+
+    public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -28,10 +31,10 @@ class RegisterController extends BaseController
             'password' => Hash::make($request->password),
         ]);
 
-        $token = $user->createToken('frontend-token')->plainTextToken;
+         $token = $user->createToken('frontend-token')->plainTextToken;
 
         return $this->sendResponse([
-            'token' => $token,
+             'token' => $token,
             'user' => $user,
         ], 'Registered successfully');
     }
@@ -44,13 +47,13 @@ class RegisterController extends BaseController
 
         $user = Auth::user();
 
-        // Optional: revoke old tokens
+        
         $user->tokens()->delete();
 
-        $token = $user->createToken('frontend-token')->plainTextToken;
+         $token = $user->createToken('frontend-token')->plainTextToken;
 
         return $this->sendResponse([
-            'token' => $token,
+             'token' => $token,
             'user' => $user,
         ], 'Login successful');
     }
