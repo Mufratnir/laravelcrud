@@ -4,7 +4,7 @@ use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ForgotPasswordController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\EmailVerificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,6 +19,8 @@ Route::post('/login', [RegisterController::class, 'login']);
 Route::post('/forgot-password', [ForgotPasswordController::class, 'forgot']);
 Route::post('/reset-password', [ForgotPasswordController::class, 'reset']);
 
+Route::get('/verify-email/{token}', [EmailVerificationController::class, 'verifyEmail']);
+
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (SANCTUM)
@@ -28,6 +30,8 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'reset']);
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [RegisterController::class, 'logout']);
+
+    Route::post('/email/resend', [EmailVerificationController::class, 'resend']);
 
     Route::prefix('v1')->group(function () {
 
