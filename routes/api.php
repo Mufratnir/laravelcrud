@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -32,6 +33,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [RegisterController::class, 'logout']);
 
     Route::post('/email/resend', [EmailVerificationController::class, 'resend']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread', [NotificationController::class, 'unread']);
+    Route::post('/notifications/read/{id}', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+
 
     Route::prefix('v1')->group(function () {
 
