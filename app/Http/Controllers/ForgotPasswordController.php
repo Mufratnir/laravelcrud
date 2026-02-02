@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Http\Controllers\BaseController;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ForgotPasswordController extends BaseController
 {
@@ -14,16 +18,29 @@ class ForgotPasswordController extends BaseController
     public function forgot(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email|exists:users,email',
         ]);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $user = User::Where('email', $request->email)->first();
 
-        return $status === Password::RESET_LINK_SENT
-            ? $this->sendResponse([], 'Reset link sent to email')
-            : $this->sendError('Unable to send reset link');
+        $token = Str::random(64);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            [
+                'token'=> $token,
+                'created_at'=> Carbon::now()
+            ]
+        );
+        $resetLink = "http://localhost:5173/ResetPassword?token={$token}&email={$user->email}";
+
+        $user->notify(new ResetPasswordNotification($user, $resetLink));
+
+        return response ()->json([
+            'success'=> true,
+            'message' => 'password reset link sent to your email'
+        ]);
+            
     }
 
     // RESET PASSWORD
@@ -35,18 +52,25 @@ class ForgotPasswordController extends BaseController
             'password' => 'required|min:6|confirmed',
         ]);
 
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                    'remember_token' => Str::random(60),
-                ])->save();
-            }
-        );
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->where('token', $request->token)
+            ->first();
+        
+        if(!$record) {
+            return $this->sendError('Invalid or expired token');
+        }
 
-        return $status === Password::PASSWORD_RESET
-            ? $this->sendResponse([], 'Password reset successful')
-            : $this->sendError('Invalid token');
-    }
+        $user = User::where('email', $request->email)->first();
+
+        $user->password = Hash::make($request->password);
+        $user->remember_token = str::random(60);
+        $user->save();
+
+        DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->delete();
+      
+            return $this->sendResponse([], 'Password reset successful');
+}
 }
